@@ -5,3 +5,5 @@ products:
     asin: B001ARYU58
   - name: PS5
     asin: B08FC6MR62
+  - name: other bands
+    asin: B078T3PL13
