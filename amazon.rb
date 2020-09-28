@@ -33,7 +33,7 @@ class Amazon
         end
       end
     else
-      puts "[RATE LIMITED] #{response.status} – #{response.body}"
+      puts "[ERROR] #{response.status} – #{response.body}"
     end
   end
 
