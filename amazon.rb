@@ -22,12 +22,11 @@ class Amazon
     if response.status == 200
       items = response.to_h.dig('ItemsResult', 'Items')
       items.each do |item|
-        title = item.dig('ItemInfo', 'Title', 'DisplayValue')
-        url = item.dig('DetailPageURL')
-        image = item.dig('Images', 'Primary', 'Large', 'URL')
-        listings = item.dig('Offers', 'Listings')
-        amazon_listing = listings&.find { |l| l.dig('Availability', 'Type') == 'Now' && l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
+        amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('Availability', 'Type') == 'Now' && l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
         unless amazon_listing.nil?
+          title = item.dig('ItemInfo', 'Title', 'DisplayValue')
+          url = item.dig('DetailPageURL')
+          image = item.dig('Images', 'Primary', 'Large', 'URL')
           price = amazon_listing.dig('Price', 'DisplayAmount')
           notify_slack(title: title, url: url, image: image, price: price)
         end
