@@ -38,8 +38,8 @@ class Amazon
 
   def notify_slack(title:, url:, image:, price:)
     attachment = {
-      fallback: "Stock alert! #{title} (#{price}): #{url}",
-      pretext: 'Stock alert!',
+      fallback: "In stock! #{title} (#{price}): #{url}",
+      pretext: 'In stock!',
       title: title,
       title_link: url,
       fields: [{ title: 'Price', short: true, value: price }],
