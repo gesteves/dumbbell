@@ -8,10 +8,9 @@ class Amazon
   end
 
   def check_inventory
-    products = YAML.load_file('products.yml')['products']
     # Split ASINs into arrays of 10;
     # API only allows ten at a time.
-    item_ids = products.map { |p| p['asin'] }.each_slice(10).to_a
+    item_ids = YAML.load_file('products.yml')['products'].each_slice(10).to_a
     item_ids.each do |ids|
       get_items(item_ids: ids)
       sleep 1
@@ -27,6 +26,7 @@ class Amazon
       'Offers.Listings.DeliveryInfo.IsPrimeEligible',
       'Offers.Listings.Price'
     ]
+    puts "Fetching data for items #{item_ids.join(', ')}"
     response = @client.get_items(item_ids: item_ids, resources: resources, condition: 'New')
     if response.status == 200
       items = response.to_h.dig('ItemsResult', 'Items')
