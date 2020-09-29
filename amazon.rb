@@ -40,7 +40,7 @@ class Amazon
         # 2. Are sold directly by Amazon, not third-party sellers
         # 3. Are available on Prime
         amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('Availability', 'Type') == 'Now' && l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
-        
+
         if amazon_listing.nil?
           puts "[OUT OF STOCK] #{title} – #{url}"
         else
