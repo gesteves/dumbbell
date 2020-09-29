@@ -25,18 +25,22 @@ class Amazon
       'Offers.Listings.DeliveryInfo.IsPrimeEligible',
       'Offers.Listings.Price'
      ]
+     puts "Requesting product information for IDs: #{item_ids.join(', ')}"
      response = @client.get_items(item_ids: item_ids, resources: resources, condition: 'New')
      if response.status == 200
        items = response.to_h.dig('ItemsResult', 'Items')
        items.each do |item|
-         amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('Availability', 'Type') == 'Now' && l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
-         unless amazon_listing.nil?
-           title = item.dig('ItemInfo', 'Title', 'DisplayValue')
-           url = item.dig('DetailPageURL')
-           image = item.dig('Images', 'Primary', 'Large', 'URL')
-           price = amazon_listing.dig('Price', 'DisplayAmount')
-           notify_slack(title: title, url: url, image: image, price: price)
-         end
+        title = item.dig('ItemInfo', 'Title', 'DisplayValue')
+        url = item.dig('DetailPageURL')
+        amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('Availability', 'Type') == 'Now' && l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
+        if amazon_listing.nil?
+          puts "[OUT OF STOCK] #{title} – #{url}"
+        else
+          puts "[IN STOCK] #{title} – #{url}"
+          image = item.dig('Images', 'Primary', 'Large', 'URL')
+          price = amazon_listing.dig('Price', 'DisplayAmount')
+          notify_slack(title: title, url: url, image: image, price: price)
+        end
        end
      else
        puts "[ERROR] #{response.status} – #{response.body}"
