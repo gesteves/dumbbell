@@ -34,7 +34,7 @@ class Amazon
       attachments = items&.map { |item| to_attachment(item) }&.compact
       notify_slack(text: 'In stock!', attachments: attachments) unless attachments.empty?
     else
-      puts "[ERROR] #{response.status} – #{response.body}"
+      puts "[ERROR] #{response.status} – #{response.to_h.dig('Errors')&.map { |e| e.dig('Message') }&.join(', ')}"
     end
   end
 
