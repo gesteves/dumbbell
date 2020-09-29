@@ -32,6 +32,9 @@ class Amazon
        items.each do |item|
         title = item.dig('ItemInfo', 'Title', 'DisplayValue')
         url = item.dig('DetailPageURL')
+        url = URI.parse(url)
+        url.query = nil
+        url = url.to_s
         amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('Availability', 'Type') == 'Now' && l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
         if amazon_listing.nil?
           puts "[OUT OF STOCK] #{title} – #{url}"
