@@ -9,6 +9,8 @@ class Amazon
 
   def check_inventory
     products = YAML.load_file('products.yml')['products']
+    # Split ASINs into arrays of 10;
+    # API only allows ten at a time.
     item_ids = products.map { |p| p['asin'] }.each_slice(10).to_a
     item_ids.each do |ids|
       get_items(item_ids: ids)
@@ -24,18 +26,21 @@ class Amazon
       'Offers.Listings.DeliveryInfo.IsAmazonFulfilled',
       'Offers.Listings.DeliveryInfo.IsPrimeEligible',
       'Offers.Listings.Price'
-     ]
-     puts "Requesting product information for IDs: #{item_ids.join(', ')}"
-     response = @client.get_items(item_ids: item_ids, resources: resources, condition: 'New')
-     if response.status == 200
-       items = response.to_h.dig('ItemsResult', 'Items')
-       items.each do |item|
+    ]
+    puts "Requesting product information for IDs: #{item_ids.join(', ')}"
+    response = @client.get_items(item_ids: item_ids, resources: resources, condition: 'New')
+    if response.status == 200
+      items = response.to_h.dig('ItemsResult', 'Items')
+      items.each do |item|
         title = item.dig('ItemInfo', 'Title', 'DisplayValue')
         url = item.dig('DetailPageURL')
-        url = URI.parse(url)
-        url.query = nil
-        url = url.to_s
+
+        # Find listings that:
+        # 1. Are available now (not for preorder or backordered)
+        # 2. Are sold directly by Amazon, not third-party sellers
+        # 3. Are available on Prime
         amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('Availability', 'Type') == 'Now' && l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
+        
         if amazon_listing.nil?
           puts "[OUT OF STOCK] #{title} – #{url}"
         else
@@ -44,10 +49,10 @@ class Amazon
           price = amazon_listing.dig('Price', 'DisplayAmount')
           notify_slack(title: title, url: url, image: image, price: price)
         end
-       end
-     else
-       puts "[ERROR] #{response.status} – #{response.body}"
-     end
+      end
+    else
+      puts "[ERROR] #{response.status} – #{response.body}"
+    end
   end
 
   def notify_slack(title:, url:, image:, price:)
