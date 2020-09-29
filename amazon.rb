@@ -27,44 +27,40 @@ class Amazon
       'Offers.Listings.DeliveryInfo.IsPrimeEligible',
       'Offers.Listings.Price'
     ]
-    puts "Requesting product information for IDs: #{item_ids.join(', ')}"
     response = @client.get_items(item_ids: item_ids, resources: resources, condition: 'New')
     if response.status == 200
       items = response.to_h.dig('ItemsResult', 'Items')
-      items.each do |item|
-        title = item.dig('ItemInfo', 'Title', 'DisplayValue')
-        url = item.dig('DetailPageURL')
-
-        # Find listings that:
-        # 1. Are available now (not for preorder or backordered)
-        # 2. Are sold directly by Amazon, not third-party sellers
-        # 3. Are available on Prime
-        amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('Availability', 'Type') == 'Now' && l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
-
-        if amazon_listing.nil?
-          puts "[OUT OF STOCK] #{title} – #{url}"
-        else
-          puts "[IN STOCK] #{title} – #{url}"
-          image = item.dig('Images', 'Primary', 'Large', 'URL')
-          price = amazon_listing.dig('Price', 'DisplayAmount')
-          notify_slack(title: title, url: url, image: image, price: price)
-        end
-      end
+      attachments = items&.map { |item| to_attachment(item) }&.compact
+      notify_slack(text: 'In stock!', attachments: attachments) unless attachments.empty?
     else
       puts "[ERROR] #{response.status} – #{response.body}"
     end
   end
 
-  def notify_slack(title:, url:, image:, price:)
-    attachment = {
-      fallback: "In stock! #{title} (#{price}): #{url}",
-      pretext: 'In stock!',
+  def to_attachment(item)
+    # Find listings that:
+    # 1. Are available now (not for preorder or backordered)
+    # 2. Are sold directly by Amazon, not third-party sellers
+    # 3. Are available on Prime
+    amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('Availability', 'Type') == 'Now' && l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
+    return nil if amazon_listing.nil?
+
+    title = item.dig('ItemInfo', 'Title', 'DisplayValue')
+    url = item.dig('DetailPageURL')
+    image = item.dig('Images', 'Primary', 'Large', 'URL')
+    price = amazon_listing.dig('Price', 'DisplayAmount')
+
+    {
+      fallback: "#{title} (#{price}): #{url}",
       title: title,
       title_link: url,
       fields: [{ title: 'Price', short: true, value: price }],
       thumb_url: image
     }
-    payload = { text: '', attachments: [attachment] }.to_json
+  end
+
+  def notify_slack(text:, attachments:)
+    payload = { text: text, attachments: attachments }.to_json
     HTTParty.post(ENV['SLACK_WEBHOOK'], body: payload, headers: { 'Content-Type': 'application/json' })
   end
 end
