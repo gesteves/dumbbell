@@ -40,10 +40,9 @@ class Amazon
 
   def to_attachment(item)
     # Find listings that:
-    # 1. Are available now (not for preorder or backordered)
-    # 2. Are sold directly by Amazon, not third-party sellers
-    # 3. Are available on Prime
-    amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('Availability', 'Type') == 'Now' && l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
+    # 1. Are sold directly by Amazon, not third-party sellers
+    # 2. Are available on Prime
+    amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
     title = item.dig('ItemInfo', 'Title', 'DisplayValue')
     url = item.dig('DetailPageURL')
 
