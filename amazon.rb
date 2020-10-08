@@ -32,7 +32,7 @@ class Amazon
     if response.status == 200
       items = response.to_h.dig('ItemsResult', 'Items')
       attachments = items&.map { |item| to_attachment(item) }&.compact
-      notify_slack(text: 'In stock!', attachments: attachments) unless attachments.empty?
+      attachments.each { |attachment| notify_slack(text: '', attachments: [attachment]) } if attachments.present?
     else
       puts "[ERROR] #{response.status} – #{response.to_h.dig('Errors')&.map { |e| e.dig('Message') }&.join(', ')}"
     end
@@ -56,9 +56,10 @@ class Amazon
     price = amazon_listing.dig('Price', 'DisplayAmount')
 
     {
-      fallback: "#{title} (#{price}): #{url}",
+      fallback: "In stock! #{title} (#{price}): #{url}",
       title: title,
       title_link: url,
+      pretext: 'In stock!',
       fields: [{ title: 'Price', short: true, value: price }],
       thumb_url: image
     }
