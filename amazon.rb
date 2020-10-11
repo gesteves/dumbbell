@@ -31,8 +31,8 @@ class Amazon
     response = @client.get_items(item_ids: item_ids, resources: resources, condition: 'New')
     if response.status == 200
       items = response.to_h.dig('ItemsResult', 'Items')
-      attachments = items&.map { |item| to_attachment(item) }&.compact
-      attachments.each { |attachment| notify_slack(text: '', attachments: [attachment]) } if attachments.present?
+      attachments = items&.map { |item| to_attachment(item) }&.compact || []
+      attachments.each { |attachment| notify_slack(text: '', attachments: [attachment]) }
     else
       puts "[ERROR] #{response.status} – #{response.to_h.dig('Errors')&.map { |e| e.dig('Message') }&.join(', ')}"
     end
