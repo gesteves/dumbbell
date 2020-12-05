@@ -23,9 +23,8 @@ class Amazon
       'Images.Primary.Large',
       'ItemInfo.Title',
       'Offers.Listings.Availability.Type',
-      'Offers.Listings.DeliveryInfo.IsAmazonFulfilled',
-      'Offers.Listings.DeliveryInfo.IsPrimeEligible',
-      'Offers.Listings.Price'
+      'Offers.Listings.Price',
+      'Offers.Listings.MerchantInfo'
     ]
     puts "Fetching data for items #{item_ids.join(', ')}"
     response = @client.get_items(item_ids: item_ids, resources: resources, condition: 'New')
@@ -42,7 +41,7 @@ class Amazon
     # Find listings that:
     # 1. Are sold directly by Amazon, not third-party sellers
     # 2. Are available on Prime
-    amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('DeliveryInfo', 'IsAmazonFulfilled') && l.dig('DeliveryInfo', 'IsPrimeEligible') }
+    amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('MerchantInfo', 'Name') == "Amazon.com" }
     title = item.dig('ItemInfo', 'Title', 'DisplayValue')
     url = item.dig('DetailPageURL')
 
