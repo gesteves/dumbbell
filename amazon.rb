@@ -8,7 +8,7 @@ class Amazon
   end
 
   def check_inventory
-    urls = YAML.load_file('products.yml')['products'].map { |u| URI.parse(u) }
+    urls = YAML.load_file('products.yml')['products']['amazon'].map { |u| URI.parse(u) }
     # Get ASINs out of URLs, split into arrays of 10;
     # API only allows fetching ten products at a time.
     item_ids = urls.select { |u| u.host == 'www.amazon.com' }.map { |u| u.path.match(/\/(dp|gp)(\/product)?\/([\w]+)/)[3] }.compact.uniq.each_slice(10).to_a
