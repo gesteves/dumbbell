@@ -43,9 +43,9 @@ class Amazon
     # 1. Are sold directly by Amazon, not third-party sellers
     # 2. Are available on Prime
     amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('MerchantInfo', 'Name') == "Amazon.com" }
-    title = item.dig('ItemInfo', 'Title', 'DisplayValue')
-    url = item.dig('DetailPageURL')
-    price = amazon_listing.dig('Price', 'DisplayAmount')
+    title = item&.dig('ItemInfo', 'Title', 'DisplayValue')
+    url = item&.dig('DetailPageURL')
+    price = amazon_listing&.dig('Price', 'DisplayAmount')
 
     if amazon_listing.nil?
       puts "[OUT OF STOCK] #{title} – #{url}"
