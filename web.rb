@@ -33,7 +33,7 @@ class Web
   end
 
   def notify_slack(text:)
-    payload = { text: text }.to_json
+    payload = { text: text, unfurl_links: true }.to_json
     HTTParty.post(ENV['SLACK_WEBHOOK'], body: payload, headers: { 'Content-Type': 'application/json' })
   end
 end

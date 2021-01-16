@@ -1,6 +1,7 @@
 require 'vacuum'
 require 'yaml'
 require 'httparty'
+require 'active_support/all'
 
 class Amazon
   def initialize
@@ -8,7 +9,9 @@ class Amazon
   end
 
   def check_inventory
-    urls = YAML.load_file('products.yml')['products']['amazon'].map { |u| URI.parse(u) }
+    urls = YAML.load_file('products.yml').dig('products', 'amazon')&.map { |u| URI.parse(u) }
+    return if urls.blank?
+
     # Get ASINs out of URLs, split into arrays of 10;
     # API only allows fetching ten products at a time.
     item_ids = urls.select { |u| u.host == 'www.amazon.com' }.map { |u| u.path.match(/\/(dp|gp)(\/product)?\/([\w]+)/)[3] }.compact.uniq.each_slice(10).to_a
@@ -20,7 +23,6 @@ class Amazon
 
   def get_items(item_ids:)
     resources = [
-      'Images.Primary.Large',
       'ItemInfo.Title',
       'Offers.Listings.Availability.Type',
       'Offers.Listings.Price',
@@ -30,42 +32,32 @@ class Amazon
     response = @client.get_items(item_ids: item_ids, resources: resources, condition: 'New')
     if response.status == 200
       items = response.to_h.dig('ItemsResult', 'Items')
-      attachments = items&.map { |item| to_attachment(item) }&.compact || []
-      attachments.each { |attachment| notify_slack(text: '', attachments: [attachment]) }
+      items&.map { |i| to_message(i) }&.compact&.each { |i| notify_slack(text: i) }
     else
       puts "[ERROR] #{response.status} – #{response.to_h.dig('Errors')&.map { |e| e.dig('Message') }&.join(', ')}"
     end
   end
 
-  def to_attachment(item)
+  def to_message(item)
     # Find listings that:
     # 1. Are sold directly by Amazon, not third-party sellers
     # 2. Are available on Prime
     amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('MerchantInfo', 'Name') == "Amazon.com" }
     title = item.dig('ItemInfo', 'Title', 'DisplayValue')
     url = item.dig('DetailPageURL')
+    price = amazon_listing.dig('Price', 'DisplayAmount')
 
     if amazon_listing.nil?
       puts "[OUT OF STOCK] #{title} – #{url}"
       return nil
     end
 
-    puts "[IN STOCK] #{title} – #{url}"
-    image = item.dig('Images', 'Primary', 'Large', 'URL')
-    price = amazon_listing.dig('Price', 'DisplayAmount')
-
-    {
-      fallback: "In stock! #{title} (#{price}): #{url}",
-      title: title,
-      title_link: url,
-      pretext: 'In stock!',
-      fields: [{ title: 'Price', short: true, value: price }],
-      thumb_url: image
-    }
+    puts "[IN STOCK] #{title} (#{price}) - #{url}"
+    "In stock! #{title} (#{price}): #{url}",
   end
 
   def notify_slack(text:, attachments:)
-    payload = { text: text, attachments: attachments }.to_json
+    payload = { text: text, unfurl_links: true }.to_json
     HTTParty.post(ENV['SLACK_WEBHOOK'], body: payload, headers: { 'Content-Type': 'application/json' })
   end
 end
