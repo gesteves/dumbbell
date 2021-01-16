@@ -2,7 +2,3 @@ products:
   amazon:
     - https://www.amazon.com/dp/B08FC6MR62/ # PS5
     - https://www.amazon.com/Sonos-Arc-soundbar-subwoofer-Microphone-Free/dp/B087CD7H2G
-  web:
-    - name: 'Black Concept 2 Model D Rower'
-      url: https://www.roguefitness.com/black-concept-2-model-d-rower-pm5
-      selector: '.add-to-box > .add-to-cart > button'
