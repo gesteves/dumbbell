@@ -9,6 +9,7 @@ class Web
 
   def check_inventory
     products = YAML.load_file('products.yml')['products']['web']
+    return if products.blank?
     products.each do |product|
       name = product['name']
       url = product['url']
