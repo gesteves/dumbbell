@@ -53,7 +53,7 @@ class Amazon
     end
 
     puts "[IN STOCK] #{title} (#{price}) - #{url}"
-    "In stock! #{title} (#{price}): #{url}",
+    "In stock! #{title} (#{price}): #{url}"
   end
 
   def notify_slack(text:, attachments:)
