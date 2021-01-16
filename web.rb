@@ -8,7 +8,7 @@ class Web
   end
 
   def check_inventory
-    products = YAML.load_file('products.yml')['products']['web']
+    products = YAML.load_file('products.yml').dig('products', 'web')
     return if products.blank?
     products.each do |product|
       name = product['name']
