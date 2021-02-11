@@ -39,9 +39,8 @@ class Amazon
   end
 
   def to_message(item)
-    # Find listings that:
-    # 1. Are sold directly by Amazon, not third-party sellers
-    # 2. Are available on Prime
+    # Find listings that are sold directly by Amazon, not third-party sellers.
+    # TODO: Figure out a better way to include legit sellers besides Amazon.
     amazon_listing = item.dig('Offers', 'Listings')&.find { |l| l.dig('MerchantInfo', 'Name') == "Amazon.com" }
     title = item&.dig('ItemInfo', 'Title', 'DisplayValue')
     url = item&.dig('DetailPageURL')
