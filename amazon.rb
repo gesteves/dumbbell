@@ -55,7 +55,7 @@ class Amazon
     "In stock! #{title} (#{price}): #{url}"
   end
 
-  def notify_slack(text:, attachments:)
+  def notify_slack(text:)
     payload = { text: text, unfurl_links: true }.to_json
     HTTParty.post(ENV['SLACK_WEBHOOK'], body: payload, headers: { 'Content-Type': 'application/json' })
   end
