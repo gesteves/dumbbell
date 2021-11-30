@@ -14,7 +14,7 @@ class Amazon
 
     # Get ASINs out of URLs, split into arrays of 10;
     # API only allows fetching ten products at a time.
-    item_ids = urls.select { |u| u.host == 'www.amazon.com' || u.host == 'smile.amazon.com' }.map { |u| u.path.match(/\/(dp|gp)(\/product)?\/([\w]+)/)[3] }.compact.uniq.each_slice(10).to_a
+    item_ids = urls.map { |u| u.path.match(/\/(dp|gp)(\/product)?\/([\w]+)/)[3] }.compact.uniq.each_slice(10).to_a
     item_ids.each do |ids|
       get_items(item_ids: ids)
       sleep 1
